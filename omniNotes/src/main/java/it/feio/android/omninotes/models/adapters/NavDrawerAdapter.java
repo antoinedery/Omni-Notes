@@ -32,6 +32,8 @@ import com.pixplicity.easyprefs.library.Prefs;
 import it.feio.android.omninotes.MainActivity;
 import it.feio.android.omninotes.R;
 import it.feio.android.omninotes.models.NavigationItem;
+import it.feio.android.omninotes.models.holders.NoteDrawerAdapterViewHolder;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,53 +69,38 @@ public class NavDrawerAdapter extends BaseAdapter {
     return position;
   }
 
-
   public View getView(int position, View convertView, ViewGroup parent) {
     NoteDrawerAdapterViewHolder holder;
     if (convertView == null) {
       convertView = inflater.inflate(R.layout.drawer_list_item, parent, false);
 
       holder = new NoteDrawerAdapterViewHolder();
-
-      holder.imgIcon = convertView.findViewById(R.id.icon);
-      holder.txtTitle = convertView.findViewById(R.id.title);
+      holder.setInitialHolderAttributes(convertView);
       convertView.setTag(holder);
     } else {
       holder = (NoteDrawerAdapterViewHolder) convertView.getTag();
     }
 
-    // Set the results into TextViews
-    holder.txtTitle.setText(items.get(position).getText());
-
-    if (isSelected(position)) {
-      holder.imgIcon.setImageResource(items.get(position).getIconSelected());
-      holder.txtTitle.setTypeface(null, Typeface.BOLD);
-      int color = mActivity.getResources().getColor(R.color.colorPrimaryDark);
-      holder.txtTitle.setTextColor(color);
-      holder.imgIcon.getDrawable().mutate().setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-    } else {
-      holder.imgIcon.setImageResource(items.get(position).getIcon());
-      holder.txtTitle.setTypeface(null, Typeface.NORMAL);
-      holder.txtTitle.setTextColor(mActivity.getResources().getColor(R.color.drawer_text));
-    }
+    holder.setHolderAttributes(items, position, mActivity, isSelected(position));
 
     return convertView;
   }
+
 
 
   private boolean isSelected(int position) {
 
     // Getting actual navigation selection
     String[] navigationListCodes = mActivity.getResources()
-        .getStringArray(R.array.navigation_list_codes);
+            .getStringArray(R.array.navigation_list_codes);
 
     // Managing temporary navigation indicator when coming from a widget
     String navigationTmp =
-        MainActivity.class.isAssignableFrom(mActivity.getClass()) ? ((MainActivity) mActivity)
-            .getNavigationTmp() : null;
+            MainActivity.class.isAssignableFrom(mActivity.getClass()) ? ((MainActivity) mActivity)
+                    .getNavigationTmp() : null;
 
     String navigation = navigationTmp != null ? navigationTmp
-        : Prefs.getString(PREF_NAVIGATION, navigationListCodes[0]);
+            : Prefs.getString(PREF_NAVIGATION, navigationListCodes[0]);
 
     // Finding selected item from standard navigation items or tags
     int index = Arrays.asList(navigationListCodes).indexOf(navigation);
@@ -123,20 +110,8 @@ public class NavDrawerAdapter extends BaseAdapter {
     }
 
     String navigationLocalized = mActivity.getResources()
-        .getStringArray(R.array.navigation_list)[index];
+            .getStringArray(R.array.navigation_list)[index];
     return navigationLocalized.equals(items.get(position).getText());
   }
 
-}
-
-
-/**
- * Holder object
- *
- * @author fede
- */
-class NoteDrawerAdapterViewHolder {
-
-  ImageView imgIcon;
-  TextView txtTitle;
 }
