@@ -23,6 +23,8 @@ import static it.feio.android.omninotes.utils.ConstantsBase.PREF_SHOW_UNCATEGORI
 import android.content.Intent;
 import android.content.res.TypedArray;
 import android.os.AsyncTask;
+import android.os.Build;
+
 import androidx.fragment.app.Fragment;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -40,7 +42,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 public class MainMenuTask extends AsyncTask<Void, Void, List<NavigationItem>> {
 
   private final WeakReference<Fragment> mFragmentWeakReference;
@@ -117,38 +121,118 @@ public class MainMenuTask extends AsyncTask<Void, Void, List<NavigationItem>> {
     return items;
   }
 
+//  private boolean checkSkippableItem(int i) {
+//    boolean skippable = false;
+//    boolean dynamicMenu = Prefs.getBoolean(PREF_DYNAMIC_MENU, true);
+//    DynamicNavigationLookupTable dynamicNavigationLookupTable = null;
+//    if (dynamicMenu) {
+//      dynamicNavigationLookupTable = DynamicNavigationLookupTable.getInstance();
+//    }
+//    switch (i) {
+//      case Navigation.REMINDERS:
+//        if (dynamicMenu && dynamicNavigationLookupTable.getReminders() == 0) {
+//          skippable = true;
+//        }
+//        break;
+//      case Navigation.UNCATEGORIZED:
+//        boolean showUncategorized = Prefs.getBoolean(PREF_SHOW_UNCATEGORIZED, false);
+//        if (!showUncategorized || (dynamicMenu
+//            && dynamicNavigationLookupTable.getUncategorized() == 0)) {
+//          skippable = true;
+//        }
+//        break;
+//      case Navigation.ARCHIVE:
+//        if (dynamicMenu && dynamicNavigationLookupTable.getArchived() == 0) {
+//          skippable = true;
+//        }
+//        break;
+//      case Navigation.TRASH:
+//        if (dynamicMenu && dynamicNavigationLookupTable.getTrashed() == 0) {
+//          skippable = true;
+//        }
+//        break;
+//    }
+//    return skippable;
+//  }
+
+//  private boolean checkSkippableItem(int i) {
+//    boolean dynamicMenu = Prefs.getBoolean(PREF_DYNAMIC_MENU, true);
+//    DynamicNavigationLookupTable dynamicNavigationLookupTable = null;
+//    if (dynamicMenu) {
+//      dynamicNavigationLookupTable = DynamicNavigationLookupTable.getInstance();
+//    }
+//
+//    return getSkippableForNavItem(i, dynamicMenu, dynamicNavigationLookupTable);
+//  }
+//
+//  private boolean getSkippableForNavItem(int i, boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+//    switch (i) {
+//      case Navigation.REMINDERS:
+//        return isRemindersSkippable(dynamicMenu, dynamicNavigationLookupTable);
+//      case Navigation.UNCATEGORIZED:
+//        return isUncategorizedSkippable(dynamicMenu, dynamicNavigationLookupTable);
+//      case Navigation.ARCHIVE:
+//        return isArchiveSkippable(dynamicMenu, dynamicNavigationLookupTable);
+//      case Navigation.TRASH:
+//        return isTrashSkippable(dynamicMenu, dynamicNavigationLookupTable);
+//      default:
+//        return false;
+//    }
+//  }
+//  private boolean isRemindersSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+//    return (dynamicMenu && dynamicNavigationLookupTable.getReminders() == 0) ;
+//  }
+//
+//  private boolean isUncategorizedSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+//    boolean showUncategorized = Prefs.getBoolean(PREF_SHOW_UNCATEGORIZED, false);
+//    return (!showUncategorized || (dynamicMenu && dynamicNavigationLookupTable.getUncategorized() == 0));
+//  }
+//
+//  private boolean isArchiveSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+//    return (dynamicMenu && dynamicNavigationLookupTable.getArchived() == 0);
+//  }
+//
+//  private boolean isTrashSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+//    return (dynamicMenu && dynamicNavigationLookupTable.getTrashed() == 0) ;
+//  }
+
+
+  private static final Map<Integer, BiFunction<Boolean, DynamicNavigationLookupTable, Boolean>> NAVIGATION_MAP = new HashMap<>();
+  static {
+    NAVIGATION_MAP.put(Navigation.REMINDERS, MainMenuTask::isRemindersSkippable);
+    NAVIGATION_MAP.put(Navigation.UNCATEGORIZED, MainMenuTask::isUncategorizedSkippable);
+    NAVIGATION_MAP.put(Navigation.ARCHIVE, MainMenuTask::isArchiveSkippable);
+    NAVIGATION_MAP.put(Navigation.TRASH, MainMenuTask::isTrashSkippable);
+  }
+
   private boolean checkSkippableItem(int i) {
-    boolean skippable = false;
     boolean dynamicMenu = Prefs.getBoolean(PREF_DYNAMIC_MENU, true);
     DynamicNavigationLookupTable dynamicNavigationLookupTable = null;
     if (dynamicMenu) {
       dynamicNavigationLookupTable = DynamicNavigationLookupTable.getInstance();
     }
-    switch (i) {
-      case Navigation.REMINDERS:
-        if (dynamicMenu && dynamicNavigationLookupTable.getReminders() == 0) {
-          skippable = true;
-        }
-        break;
-      case Navigation.UNCATEGORIZED:
-        boolean showUncategorized = Prefs.getBoolean(PREF_SHOW_UNCATEGORIZED, false);
-        if (!showUncategorized || (dynamicMenu
-            && dynamicNavigationLookupTable.getUncategorized() == 0)) {
-          skippable = true;
-        }
-        break;
-      case Navigation.ARCHIVE:
-        if (dynamicMenu && dynamicNavigationLookupTable.getArchived() == 0) {
-          skippable = true;
-        }
-        break;
-      case Navigation.TRASH:
-        if (dynamicMenu && dynamicNavigationLookupTable.getTrashed() == 0) {
-          skippable = true;
-        }
-        break;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      return NAVIGATION_MAP.getOrDefault(i, (b, t) -> false).apply(dynamicMenu, dynamicNavigationLookupTable);
     }
-    return skippable;
+    return false;
   }
+
+  private static boolean isRemindersSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+    return (dynamicMenu && dynamicNavigationLookupTable.getReminders() == 0);
+  }
+
+  private static boolean isUncategorizedSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+    boolean showUncategorized = Prefs.getBoolean(PREF_SHOW_UNCATEGORIZED, false);
+    return (!showUncategorized || (dynamicMenu && dynamicNavigationLookupTable.getUncategorized() == 0));
+  }
+
+  private static boolean isArchiveSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+    return (dynamicMenu && dynamicNavigationLookupTable.getArchived() == 0);
+  }
+
+  private static boolean isTrashSkippable(boolean dynamicMenu, DynamicNavigationLookupTable dynamicNavigationLookupTable) {
+    return (dynamicMenu && dynamicNavigationLookupTable.getTrashed() == 0);
+  }
+
 
 }
