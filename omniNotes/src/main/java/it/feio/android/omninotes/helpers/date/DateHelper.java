@@ -24,6 +24,11 @@ import it.feio.android.omninotes.OmniNotes;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
+interface Date {
+  int year = 0;
+  int month = 0;
+  int day = 0;
+}
 
 /**
  * Helper per la generazione di date nel formato specificato nelle costanti
@@ -43,12 +48,12 @@ public class DateHelper {
   /**
    * Build a formatted date string starting from values obtained by a DatePicker
    */
-  public static String onDateSet(int year, int month, int day, String format) {
+  public static String onDateSet(Date date, String format) {
     SimpleDateFormat sdf = new SimpleDateFormat(format);
     Calendar cal = Calendar.getInstance();
-    cal.set(Calendar.YEAR, year);
-    cal.set(Calendar.MONTH, month);
-    cal.set(Calendar.DAY_OF_MONTH, day);
+    cal.set(Calendar.YEAR, date.year);
+    cal.set(Calendar.MONTH, date.month);
+    cal.set(Calendar.DAY_OF_MONTH, date.day);
     return sdf.format(cal.getTime());
   }
 
