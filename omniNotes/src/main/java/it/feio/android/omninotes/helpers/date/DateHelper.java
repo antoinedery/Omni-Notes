@@ -30,6 +30,11 @@ interface Date {
   int day = 0;
 }
 
+interface Date {
+  int year = 0;
+  int month = 0;
+  int day = 0;
+}
 /**
  * Helper per la generazione di date nel formato specificato nelle costanti
  */
